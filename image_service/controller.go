@@ -14,6 +14,16 @@ import (
 	"golang.org/x/image/draw"
 )
 
+// SaveImage processes, resizes, and saves the given image to disk as a WebP file.
+// The image is rescaled to the maximum width specified in the Manager's configuration.
+// The filename is generated using a content-aware hash (dHash) that is further hashed with MD5.
+//
+// Parameters:
+//   - img: the image.Image object to be saved.
+//
+// Returns:
+//   - filename: the generated filename for the saved image.
+//   - err: any error encountered during the process.
 func (m *Manager) SaveImage(img image.Image) (filename string, err error) {
 
 	// rescale to max width
@@ -36,10 +46,12 @@ func (m *Manager) SaveImage(img image.Image) (filename string, err error) {
 	if err != nil {
 		return
 	}
+
 	o, err := encoder.NewLossyEncoderOptions(encoder.PresetDefault, m.cfg.Quality)
 	if err != nil {
 		return
 	}
+
 	err = webp.Encode(file, img, o)
 	if err != nil {
 		return
@@ -48,6 +60,17 @@ func (m *Manager) SaveImage(img image.Image) (filename string, err error) {
 	return
 }
 
+// Read retrieves a saved image file and its size in bytes from the configured save path.
+//
+//	If there is an error, it will be of type \*PathError.
+//
+// Parameters:
+//   - filename: the name of the file to read.
+//
+// Returns:
+//   - file: a pointer to the opened file.
+//   - size: the size of the file in bytes.
+//   - err: any error encountered during the file access.
 func (m *Manager) Read(filename string) (file *os.File, size int64, err error) {
 	filePath := path.Join(m.cfg.SavePath, filename)
 
@@ -64,10 +87,14 @@ func (m *Manager) Read(filename string) (file *os.File, size int64, err error) {
 	return
 }
 
+// Delete removes the specified image file from the configured save path.
+// If there is an error, it will be of type \*PathError.
 func (m *Manager) Delete(filename string) error {
-	return nil
+	return os.Remove(path.Join(m.cfg.SavePath, filename))
 }
 
+// rescale resizes an image to the specified width while maintaining the aspect ratio.
+// It uses bilinear interpolation for resizing.
 func rescale(original image.Image, width int) image.Image {
 
 	// Define the new size
