@@ -10,6 +10,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"mime/multipart"
 	"net/http"
 	"net/url"
@@ -42,7 +43,7 @@ type Event struct {
 	// Id Unique UUID identifier for the event
 	Id openapi_types.UUID `json:"id"`
 
-	// ImageUrl URL of the uploaded image file
+	// ImageUrl URL of the  image file
 	ImageUrl string `json:"imageUrl"`
 
 	// Place The location where the lunch will take place
@@ -73,16 +74,19 @@ type GetEventsParams struct {
 // GetEventsParamsStatus defines parameters for GetEvents.
 type GetEventsParamsStatus string
 
-// PostEventsMultipartBody defines parameters for PostEvents.
-type PostEventsMultipartBody struct {
+// PostEventsJSONBody defines parameters for PostEvents.
+type PostEventsJSONBody struct {
 	// Description Additional details about the lunch event
 	Description *string `json:"description,omitempty"`
 
-	// Image The image file for the event
-	Image openapi_types.File `json:"image"`
+	// Image Link to the image
+	Image *string `json:"image,omitempty"`
 
 	// Place The location where the lunch will take place
 	Place string `json:"place"`
+
+	// Time The date and time when the event will occur
+	Time *time.Time `json:"time,omitempty"`
 
 	// Title The title of the lunch event
 	Title string `json:"title"`
@@ -103,14 +107,23 @@ type PutEventsEventIdMultipartBody struct {
 	Title string `json:"title"`
 }
 
+// PostImagesMultipartBody defines parameters for PostImages.
+type PostImagesMultipartBody struct {
+	// Image The image file to upload
+	Image openapi_types.File `json:"image"`
+}
+
 // PostAuthLoginJSONRequestBody defines body for PostAuthLogin for application/json ContentType.
 type PostAuthLoginJSONRequestBody = Login
 
-// PostEventsMultipartRequestBody defines body for PostEvents for multipart/form-data ContentType.
-type PostEventsMultipartRequestBody PostEventsMultipartBody
+// PostEventsJSONRequestBody defines body for PostEvents for application/json ContentType.
+type PostEventsJSONRequestBody PostEventsJSONBody
 
 // PutEventsEventIdMultipartRequestBody defines body for PutEventsEventId for multipart/form-data ContentType.
 type PutEventsEventIdMultipartRequestBody PutEventsEventIdMultipartBody
+
+// PostImagesMultipartRequestBody defines body for PostImages for multipart/form-data ContentType.
+type PostImagesMultipartRequestBody PostImagesMultipartBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -132,6 +145,15 @@ type ServerInterface interface {
 	// Update a specific lunch event (authenticated)
 	// (PUT /events/{eventId})
 	PutEventsEventId(w http.ResponseWriter, r *http.Request, eventId openapi_types.UUID)
+	// Upload an image
+	// (POST /images)
+	PostImages(w http.ResponseWriter, r *http.Request)
+	// Delete an image
+	// (DELETE /images/{imageName})
+	DeleteImagesImageName(w http.ResponseWriter, r *http.Request, imageName string)
+	// Retrieve an image
+	// (GET /images/{imageName})
+	GetImagesImageName(w http.ResponseWriter, r *http.Request, imageName string)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -190,7 +212,7 @@ func (siw *ServerInterfaceWrapper) GetEvents(w http.ResponseWriter, r *http.Requ
 func (siw *ServerInterfaceWrapper) PostEvents(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{"admin", "asdf"})
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{"admin"})
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PostEvents(w, r)
@@ -218,7 +240,7 @@ func (siw *ServerInterfaceWrapper) DeleteEventsEventId(w http.ResponseWriter, r 
 		return
 	}
 
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{"admin"})
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DeleteEventsEventId(w, r, eventId)
@@ -272,10 +294,81 @@ func (siw *ServerInterfaceWrapper) PutEventsEventId(w http.ResponseWriter, r *ht
 		return
 	}
 
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{"admin"})
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PutEventsEventId(w, r, eventId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// PostImages operation middleware
+func (siw *ServerInterfaceWrapper) PostImages(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{"admin"})
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostImages(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// DeleteImagesImageName operation middleware
+func (siw *ServerInterfaceWrapper) DeleteImagesImageName(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "imageName" -------------
+	var imageName string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "imageName", mux.Vars(r)["imageName"], &imageName, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "imageName", Err: err})
+		return
+	}
+
+	ctx = context.WithValue(ctx, BearerAuthScopes, []string{"admin"})
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteImagesImageName(w, r, imageName)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r.WithContext(ctx))
+}
+
+// GetImagesImageName operation middleware
+func (siw *ServerInterfaceWrapper) GetImagesImageName(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	var err error
+
+	// ------------- Path parameter "imageName" -------------
+	var imageName string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "imageName", mux.Vars(r)["imageName"], &imageName, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "imageName", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetImagesImageName(w, r, imageName)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -410,6 +503,12 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 
 	r.HandleFunc(options.BaseURL+"/events/{eventId}", wrapper.PutEventsEventId).Methods("PUT")
 
+	r.HandleFunc(options.BaseURL+"/images", wrapper.PostImages).Methods("POST")
+
+	r.HandleFunc(options.BaseURL+"/images/{imageName}", wrapper.DeleteImagesImageName).Methods("DELETE")
+
+	r.HandleFunc(options.BaseURL+"/images/{imageName}", wrapper.GetImagesImageName).Methods("GET")
+
 	return r
 }
 
@@ -459,7 +558,7 @@ func (response GetEvents200JSONResponse) VisitGetEventsResponse(w http.ResponseW
 }
 
 type PostEventsRequestObject struct {
-	Body *multipart.Reader
+	Body *PostEventsJSONRequestBody
 }
 
 type PostEventsResponseObject interface {
@@ -582,6 +681,93 @@ func (response PutEventsEventId404Response) VisitPutEventsEventIdResponse(w http
 	return nil
 }
 
+type PostImagesRequestObject struct {
+	Body *multipart.Reader
+}
+
+type PostImagesResponseObject interface {
+	VisitPostImagesResponse(w http.ResponseWriter) error
+}
+
+type PostImages201JSONResponse struct {
+	// ImageUrl URL of the uploaded image
+	ImageUrl *string `json:"imageUrl,omitempty"`
+}
+
+func (response PostImages201JSONResponse) VisitPostImagesResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type PostImages400Response struct {
+}
+
+func (response PostImages400Response) VisitPostImagesResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type DeleteImagesImageNameRequestObject struct {
+	ImageName string `json:"imageName"`
+}
+
+type DeleteImagesImageNameResponseObject interface {
+	VisitDeleteImagesImageNameResponse(w http.ResponseWriter) error
+}
+
+type DeleteImagesImageName204Response struct {
+}
+
+func (response DeleteImagesImageName204Response) VisitDeleteImagesImageNameResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteImagesImageName404Response struct {
+}
+
+func (response DeleteImagesImageName404Response) VisitDeleteImagesImageNameResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
+type GetImagesImageNameRequestObject struct {
+	ImageName string `json:"imageName"`
+}
+
+type GetImagesImageNameResponseObject interface {
+	VisitGetImagesImageNameResponse(w http.ResponseWriter) error
+}
+
+type GetImagesImageName200ImagewebpResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response GetImagesImageName200ImagewebpResponse) VisitGetImagesImageNameResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "image/webp")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type GetImagesImageName404Response struct {
+}
+
+func (response GetImagesImageName404Response) VisitGetImagesImageNameResponse(w http.ResponseWriter) error {
+	w.WriteHeader(404)
+	return nil
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Log in a user
@@ -602,6 +788,15 @@ type StrictServerInterface interface {
 	// Update a specific lunch event (authenticated)
 	// (PUT /events/{eventId})
 	PutEventsEventId(ctx context.Context, request PutEventsEventIdRequestObject) (PutEventsEventIdResponseObject, error)
+	// Upload an image
+	// (POST /images)
+	PostImages(ctx context.Context, request PostImagesRequestObject) (PostImagesResponseObject, error)
+	// Delete an image
+	// (DELETE /images/{imageName})
+	DeleteImagesImageName(ctx context.Context, request DeleteImagesImageNameRequestObject) (DeleteImagesImageNameResponseObject, error)
+	// Retrieve an image
+	// (GET /images/{imageName})
+	GetImagesImageName(ctx context.Context, request GetImagesImageNameRequestObject) (GetImagesImageNameResponseObject, error)
 }
 
 type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
@@ -694,12 +889,12 @@ func (sh *strictHandler) GetEvents(w http.ResponseWriter, r *http.Request, param
 func (sh *strictHandler) PostEvents(w http.ResponseWriter, r *http.Request) {
 	var request PostEventsRequestObject
 
-	if reader, err := r.MultipartReader(); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
+	var body PostEventsJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
-	} else {
-		request.Body = reader
 	}
+	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.PostEvents(ctx, request.(PostEventsRequestObject))
@@ -806,35 +1001,122 @@ func (sh *strictHandler) PutEventsEventId(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// PostImages operation middleware
+func (sh *strictHandler) PostImages(w http.ResponseWriter, r *http.Request) {
+	var request PostImagesRequestObject
+
+	if reader, err := r.MultipartReader(); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
+		return
+	} else {
+		request.Body = reader
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PostImages(ctx, request.(PostImagesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PostImages")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PostImagesResponseObject); ok {
+		if err := validResponse.VisitPostImagesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteImagesImageName operation middleware
+func (sh *strictHandler) DeleteImagesImageName(w http.ResponseWriter, r *http.Request, imageName string) {
+	var request DeleteImagesImageNameRequestObject
+
+	request.ImageName = imageName
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteImagesImageName(ctx, request.(DeleteImagesImageNameRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteImagesImageName")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteImagesImageNameResponseObject); ok {
+		if err := validResponse.VisitDeleteImagesImageNameResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetImagesImageName operation middleware
+func (sh *strictHandler) GetImagesImageName(w http.ResponseWriter, r *http.Request, imageName string) {
+	var request GetImagesImageNameRequestObject
+
+	request.ImageName = imageName
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetImagesImageName(ctx, request.(GetImagesImageNameRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetImagesImageName")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetImagesImageNameResponseObject); ok {
+		if err := validResponse.VisitGetImagesImageNameResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"qrhXbTdV257ifqfn1uv/BwAA//8n96+JKh4AAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

@@ -1,5 +1,7 @@
 package config
 
+import "github.com/chlyNiklas/lou-taylor-api/image_service"
+
 // User holds all data of the admin user
 type User struct {
 	Name     string
@@ -18,7 +20,10 @@ type Database struct {
 type Config struct {
 	Admin     *User
 	Database  *Database
+	Images    *image_service.ImageConfig
 	JWTSecret []byte
+	BaseUrl   string
+	SavePath  string
 }
 
 func New() *Config {
@@ -34,6 +39,12 @@ func New() *Config {
 			Name:     "event_db",
 			Port:     5432,
 		},
+		Images: &image_service.ImageConfig{
+			Quality:  80,
+			MaxWith:  2096,
+			SavePath: ".tmp/",
+		},
 		JWTSecret: []byte("my secret"),
+		BaseUrl:   "localhost:8080",
 	}
 }

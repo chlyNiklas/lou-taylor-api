@@ -1,4 +1,4 @@
-package server_service
+package controller
 
 import (
 	"context"

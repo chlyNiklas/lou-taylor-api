@@ -25,6 +25,8 @@ go.work.sum
 # env file
 .env
 
+.tmp
+
 .DS_Store
 .swp
 

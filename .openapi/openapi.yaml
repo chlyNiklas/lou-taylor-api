@@ -59,19 +59,18 @@ paths:
 
     post:
       summary: Create a new lunch event
-      description: Add a new lunch event with a title, description, place, and image. The image file is uploaded directly.
+      description: Add a new lunch event with a title, description, place, and imageUrl. The image file is uploaded directly.
       tags:
        - event
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
               type: object
               required:
                 - title
                 - place
-                - image
               properties:
                 title:
                   type: string
@@ -85,12 +84,17 @@ paths:
                   type: string
                   description: The location where the lunch will take place
                   example: 'Rooftop Cafe'
+                time:
+                  type: string
+                  format: date-time
+                  description: The date and time when the event will occur
+                  example: '2023-09-01T12:30:00Zt'
                 image:
                   type: string
-                  format: binary
-                  description: The image file for the event
+                  description: Link to the image
+                  example: 'exaple.com/image.webp'
       security:
-        - bearerAuth: ["admin", "asdf"]
+        - bearerAuth: ["admin"]
       responses:
         '201':
           description: Event successfully created
@@ -165,7 +169,7 @@ paths:
                   format: binary
                   description: An optional image file for the event
       security:
-        - bearerAuth: []
+        - bearerAuth: ["admin"]
       responses:
         '200':
           description: Event successfully updated
@@ -194,7 +198,7 @@ paths:
             type: string
             format: uuid
       security:
-        - bearerAuth: []
+        - bearerAuth: ["admin"]
       responses:
         '204':
           description: Event successfully deleted
@@ -203,6 +207,85 @@ paths:
         '404':
           description: Event not found
 
+  /images:
+    post:
+      summary: Upload an image
+      description: Upload an image to be associated with an event.
+      tags:
+        - image
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - image
+              properties:
+                image:
+                  type: string
+                  format: binary
+                  description: The image file to upload
+      security:
+        - bearerAuth: ["admin"]
+      responses:
+        '201':
+          description: Image successfully uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  imageUrl:
+                    type: string
+                    description: URL of the uploaded image
+                    example: 'https://example.com/images/lunch.jpg'
+        '400':
+          description: Bad request (invalid input data)
+
+  /images/{imageName}:
+    get:
+      summary: Retrieve an image
+      description: Fetch an uploaded image by its ID.
+      tags:
+        - image
+      parameters:
+        - name: imageName
+          in: path
+          required: true
+          description: The name of the image
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The requested image
+          content:
+            image/webp:
+              schema:
+                type: string
+                format: binary      
+        '404':
+          description: Image not found
+    delete:
+      summary: Delete an image
+      description: Remove an uploaded image by its UUID.
+      tags:
+        - image
+      parameters:
+        - name: imageName
+          in: path
+          required: true
+          description: The name of the image
+          schema:
+            type: string
+
+      responses:
+        '204':
+          description: Image successfully deleted
+        '404':
+          description: Image not found
+      security:
+        - bearerAuth: ["admin"]
 components:
   schemas:
     Event:
@@ -232,7 +315,7 @@ components:
           example: 'Main Conference Room'
         imageUrl:
           type: string
-          description: URL of the uploaded image file
+          description: URL of the  image file
           example: 'https://example.com/images/lunch.jpg'
         time:
           type: string

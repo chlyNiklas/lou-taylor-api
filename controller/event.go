@@ -1,14 +1,7 @@
-package server_service
+package controller
 
 import (
 	"context"
-	"fmt"
-	"io"
-	"mime/multipart"
-	"os"
-	"path/filepath"
-	"reflect"
-
 	"github.com/chlyNiklas/lou-taylor-api/api"
 	"github.com/chlyNiklas/lou-taylor-api/models"
 	"github.com/chlyNiklas/lou-taylor-api/utils"
@@ -41,34 +34,6 @@ func (s *Service) GetEvents(ctx context.Context, request api.GetEventsRequestObj
 }
 
 func (s *Service) PostEvents(ctx context.Context, request api.PostEventsRequestObject) (api.PostEventsResponseObject, error) {
-	var title string
-	for {
-		part, err := request.Body.NextPart()
-		if err == io.EOF {
-			break // End of parts
-		}
-		switch part.FormName() {
-		case "title":
-			// Read the title part
-			titleBytes, err := io.ReadAll(part)
-			if err != nil {
-				return nil, err
-			}
-			title = string(titleBytes)
-
-		case "image":
-			// Save the uploaded image
-			imageFilePath, err = saveUploadedFile(part, "uploads")
-			if err != nil {
-				http.Error(w, "Error saving image", http.StatusBadRequest)
-				return
-			}
-
-		default:
-			// Ignore unexpected form fields
-			continue
-		}
-	}
 
 	// Implementation here
 	return api.PostEvents400Response{}, nil
@@ -87,30 +52,4 @@ func (s *Service) GetEventsEventId(ctx context.Context, request api.GetEventsEve
 func (s *Service) PutEventsEventId(ctx context.Context, request api.PutEventsEventIdRequestObject) (api.PutEventsEventIdResponseObject, error) {
 	// Implementation here
 	return nil, nil
-}
-
-func saveUploadedFile(part *multipart.Part, uploadDir string) (string, error) {
-	// Ensure upload directory exists
-	err := os.MkdirAll(uploadDir, os.ModePerm)
-	if err != nil {
-		return "", err
-	}
-
-	// Create a new file in the upload directory
-	fileName := filepath.Base(part.FileName())
-	filePath := filepath.Join(uploadDir, fileName)
-
-	outFile, err := os.Create(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer outFile.Close()
-
-	// Copy the uploaded file data into the new file
-	_, err = io.Copy(outFile, part)
-	if err != nil {
-		return "", err
-	}
-
-	return filePath, nil
 }

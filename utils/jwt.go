@@ -57,7 +57,7 @@ func ValidateJWT(tokenString string, secret []byte) (user string, abilities []st
 		return
 	}
 
-	if int64(exp_date) > time.Now().Unix() {
+	if int64(exp_date) < time.Now().Unix() {
 		err = ErrExpiredJWT
 		return
 	}

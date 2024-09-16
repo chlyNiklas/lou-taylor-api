@@ -33,6 +33,12 @@ func (m *Middleware) Authentication(next http.Handler) http.Handler {
 		// spec for current path
 		path := matchPaths(spec.Paths, r.URL.Path)
 
+		// if no matching path, serve
+		if path == nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		// get operation
 		var operation *openapi3.Operation
 		switch r.Method {
