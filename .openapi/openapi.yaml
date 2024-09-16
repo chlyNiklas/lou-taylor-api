@@ -1,0 +1,277 @@
+openapi: 3.0.1
+info:
+  title: Lou Tailor API
+  description: API to manage lunch events with authentication (using JWT tokens), UUIDs, and basic sign-up/login. Includes direct image uploads.
+  version: 1.0.0
+
+paths:
+  /auth/login:
+    post:
+      summary: Log in a user
+      description: Authenticate a user and retrieve a JWT token.
+      tags:
+       - auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    description: JWT token to be used for authenticated requests
+                    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+        '401':
+          description: Invalid credentials
+
+  /events:
+    get:
+      summary: Get all lunch events
+      description: Retrieve a list of all lunch events.
+      tags:
+       - event
+      parameters:
+        - name: status
+          in: query
+          description: Filter events by their status (past or upcoming)
+          required: false
+          schema:
+            type: string
+            enum: [past, upcoming]
+            example: 'upcoming'
+      responses:
+        '200':
+          description: A list of lunch events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Event'
+
+    post:
+      summary: Create a new lunch event
+      description: Add a new lunch event with a title, description, place, and image. The image file is uploaded directly.
+      tags:
+       - event
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - title
+                - place
+                - image
+              properties:
+                title:
+                  type: string
+                  description: The title of the lunch event
+                  example: 'Team Building Lunch'
+                description:
+                  type: string
+                  description: Additional details about the lunch event
+                  example: 'A fun lunch event for team bonding and socializing.'
+                place:
+                  type: string
+                  description: The location where the lunch will take place
+                  example: 'Rooftop Cafe'
+                image:
+                  type: string
+                  format: binary
+                  description: The image file for the event
+      security:
+        - bearerAuth: ["admin", "asdf"]
+      responses:
+        '201':
+          description: Event successfully created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          description: Bad request (invalid input data)
+
+  /events/{eventId}:
+    get:
+      summary: Get a specific lunch event
+      description: Retrieve details of a specific lunch event by ID.
+      tags:
+       - event
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: The UUID of the lunch event
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: The lunch event details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '404':
+          description: Event not found
+
+    put:
+      summary: Update a specific lunch event (authenticated)
+      description: Modify details of a lunch event. Requires authentication via JWT.
+      tags:
+       - event
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: The UUID of the lunch event
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - title
+                - place
+              properties:
+                title:
+                  type: string
+                  description: The title of the lunch event
+                  example: 'Updated Lunch Title'
+                description:
+                  type: string
+                  description: Additional details about the lunch event
+                  example: 'Updated event details.'
+                place:
+                  type: string
+                  description: The location where the lunch will take place
+                  example: 'New Cafe Location'
+                image:
+                  type: string
+                  format: binary
+                  description: An optional image file for the event
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Event successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '400':
+          description: Bad request (invalid input data)
+        '401':
+          description: Unauthorized (JWT missing or invalid)
+        '404':
+          description: Event not found
+
+    delete:
+      summary: Delete a specific lunch event (authenticated)
+      description: Remove a lunch event by UUID. Requires authentication via JWT.
+      tags:
+       - event
+      parameters:
+        - name: eventId
+          in: path
+          required: true
+          description: The UUID of the lunch event
+          schema:
+            type: string
+            format: uuid
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Event successfully deleted
+        '401':
+          description: Unauthorized (JWT missing or invalid)
+        '404':
+          description: Event not found
+
+components:
+  schemas:
+    Event:
+      type: object
+      required:
+        - id
+        - title
+        - place
+        - imageUrl
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique UUID identifier for the event
+          example: 'd290f1ee-6c54-4b01-90e6-d701748f0851'
+        title:
+          type: string
+          description: The title of the lunch event
+          example: 'Company Lunch Meeting'
+        description:
+          type: string
+          description: Details about the lunch event
+          example: 'Lunch meeting to discuss the upcoming project deadlines.'
+        place:
+          type: string
+          description: The location where the lunch will take place
+          example: 'Main Conference Room'
+        imageUrl:
+          type: string
+          description: URL of the uploaded image file
+          example: 'https://example.com/images/lunch.jpg'
+        time:
+          type: string
+          format: date-time
+          description: The date and time when the event is going to happen 
+          example: '2023-09-01T12:30:00Z'
+
+    Signup:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: The username for the new user account
+          example: 'john_doe'
+        password:
+          type: string
+          description: The password for the new user account
+          example: 'password123'
+
+    Login:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: The username for authentication
+          example: 'john_doe'
+        password:
+          type: string
+          description: The password for authentication
+          example: 'password123'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
