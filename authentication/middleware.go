@@ -1,37 +1,21 @@
-package middleware
+package authentication
 
 import (
 	"errors"
 	"net/http"
 	"strings"
 
-	"github.com/chlyNiklas/lou-taylor-api/api"
-	"github.com/chlyNiklas/lou-taylor-api/config"
 	"github.com/chlyNiklas/lou-taylor-api/utils"
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-type Middleware struct {
-	cfg *config.Config
-}
-
-func New(cfg *config.Config) *Middleware {
-	return &Middleware{
-		cfg: cfg,
-	}
-}
-
-func (m *Middleware) Authentication(next http.Handler) http.Handler {
+// Authentication checks if all the security requrements for the path are met.
+// If the path doesn't exist inside the spec, it gets forwarded
+func (m *Service) Authentication(next http.Handler) http.Handler {
 	fn := func(w http.ResponseWriter, r *http.Request) {
-		// get swagger specification
-		spec, err := api.GetSwagger()
-		if err != nil {
-			w.WriteHeader(http.StatusForbidden)
-			return
-		}
 
 		// spec for current path
-		path := matchPaths(spec.Paths, r.URL.Path)
+		path := matchPaths(m.spec.Paths, r.URL.Path)
 
 		// if no matching path, serve
 		if path == nil {
@@ -68,7 +52,7 @@ func (m *Middleware) Authentication(next http.Handler) http.Handler {
 		}
 
 		// validate JWT
-		_, abilies, err := utils.ValidateJWT(jwt, m.cfg.JWTSecret)
+		_, abilities, err := validateJWT(jwt, m.cfg.JWTSecret)
 		if err != nil {
 			w.WriteHeader(http.StatusForbidden)
 			return
@@ -79,7 +63,7 @@ func (m *Middleware) Authentication(next http.Handler) http.Handler {
 			if len(barear) == 0 {
 				continue
 			}
-			if utils.MachesAny(barear, abilies) {
+			if utils.MachesAny(barear, abilities) {
 				next.ServeHTTP(w, r)
 				return
 			}

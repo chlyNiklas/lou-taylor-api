@@ -1,4 +1,4 @@
-package models
+package model
 
 import (
 	"errors"
@@ -19,6 +19,11 @@ type Event struct {
 	Descripion string
 	ImageLink  string
 	Date       time.Time
+}
+
+type User struct {
+	Name     string
+	Password string
 }
 
 func (e *Event) ToApiEvent() api.Event {

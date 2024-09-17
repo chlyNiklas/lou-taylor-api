@@ -4,19 +4,24 @@ import (
 	"context"
 
 	"github.com/chlyNiklas/lou-taylor-api/api"
-	"github.com/chlyNiklas/lou-taylor-api/utils"
+	"github.com/chlyNiklas/lou-taylor-api/authentication"
+	"github.com/chlyNiklas/lou-taylor-api/model"
 )
 
 // PostAuthLogin checks if the credentials match for the admin user. Then generates a jwt response.
 func (s *Service) PostAuthLogin(ctx context.Context, request api.PostAuthLoginRequestObject) (api.PostAuthLoginResponseObject, error) {
 
-	if request.Body.Password != s.cfg.Admin.Password || request.Body.Username != s.cfg.Admin.Name {
+	user := &model.User{}
+
+	user.Name = request.Body.Username
+	user.Password = request.Body.Password
+
+	token, err := s.auth.Login(user)
+
+	if err == authentication.ErrMissingFields {
 		return api.PostAuthLogin401Response{}, nil
 	}
 
-	token, err := utils.CreateJWT(request.Body.Username, []string{"admin"}, s.cfg.JWTSecret)
 	// Implementation here
-	return api.PostAuthLogin200JSONResponse{
-		Token: &token,
-	}, err
+	return api.PostAuthLogin200JSONResponse{Token: &token}, nil
 }

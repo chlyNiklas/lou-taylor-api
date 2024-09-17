@@ -1,26 +1,26 @@
-package utils
+package authentication
 
 import (
 	"errors"
 	"fmt"
 	"time"
 
+	"github.com/chlyNiklas/lou-taylor-api/utils"
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var ErrInvalidJWT = errors.New("invalid JWT")
-var ErrExpiredJWT = errors.New("expired JWT")
+var errInvalidJWT = errors.New("invalid JWT")
+var errExpiredJWT = errors.New("expired JWT")
 
-func CreateJWT(username string, abilities []string, secret []byte) (token string, err error) {
+func createJWT(username string, abilities []string, secret []byte, vialid time.Duration) (token string, err error) {
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"name":            username,
 		"abilities":       abilities,
-		"expiration_date": time.Now().Add(time.Hour * 3).Unix(),
+		"expiration_date": time.Now().Add(vialid).Unix(),
 	}).SignedString(secret)
-
 }
 
-func ValidateJWT(tokenString string, secret []byte) (user string, abilities []string, err error) {
+func validateJWT(tokenString string, secret []byte) (user string, abilities []string, err error) {
 	// Parse takes the token string and a function for looking up the key. The latter is especially
 	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
 	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
@@ -40,36 +40,36 @@ func ValidateJWT(tokenString string, secret []byte) (user string, abilities []st
 	// extract claims
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		err = ErrInvalidJWT
+		err = errInvalidJWT
 		return
 	}
 
 	// extract user
 	user, ok = claims["name"].(string)
 	if !ok {
-		err = ErrInvalidJWT
+		err = errInvalidJWT
 		return
 	}
 
 	exp_date, ok := claims["expiration_date"].(float64)
 	if !ok {
-		err = ErrInvalidJWT
+		err = errInvalidJWT
 		return
 	}
 
 	if int64(exp_date) < time.Now().Unix() {
-		err = ErrExpiredJWT
+		err = errExpiredJWT
 		return
 	}
 
 	// extract abilities
 	abilitiesSlice, ok := claims["abilities"].([]any)
 	if !ok {
-		err = ErrInvalidJWT
+		err = errInvalidJWT
 		return
 	}
 
-	abilities = Map(abilitiesSlice, func(ab any) string {
+	abilities = utils.Map(abilitiesSlice, func(ab any) string {
 		ability, o := ab.(string)
 		if !o {
 			ok = false
@@ -78,7 +78,7 @@ func ValidateJWT(tokenString string, secret []byte) (user string, abilities []st
 	})
 
 	if !ok {
-		err = ErrInvalidJWT
+		err = errInvalidJWT
 		return
 	}
 

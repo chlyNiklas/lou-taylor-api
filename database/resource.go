@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/chlyNiklas/lou-taylor-api/config"
 
-	"github.com/chlyNiklas/lou-taylor-api/models"
+	"github.com/chlyNiklas/lou-taylor-api/model"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -23,7 +23,7 @@ func New(cfg *config.Config) (db *DB, err error) {
 
 	conn, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	conn.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`)
-	conn.AutoMigrate(&models.Event{})
+	conn.AutoMigrate(&model.Event{})
 
 	db = &DB{
 		conn: conn,

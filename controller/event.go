@@ -4,14 +4,14 @@ import (
 	"context"
 
 	"github.com/chlyNiklas/lou-taylor-api/api"
-	"github.com/chlyNiklas/lou-taylor-api/models"
+	"github.com/chlyNiklas/lou-taylor-api/model"
 	"github.com/chlyNiklas/lou-taylor-api/utils"
 	"gorm.io/gorm"
 )
 
 func (s *Service) GetEvents(ctx context.Context, request api.GetEventsRequestObject) (api.GetEventsResponseObject, error) {
 
-	var getEvents func() ([]*models.Event, error)
+	var getEvents func() ([]*model.Event, error)
 	switch utils.DSNTE((*string)(request.Params.Status)) {
 	case "past":
 		getEvents = s.db.GetAllPastEvents
@@ -28,7 +28,7 @@ func (s *Service) GetEvents(ctx context.Context, request api.GetEventsRequestObj
 
 	apiEvent := utils.Map(
 		events,
-		func(e *models.Event) api.Event {
+		func(e *model.Event) api.Event {
 			return e.ToApiEvent()
 		})
 
@@ -37,9 +37,9 @@ func (s *Service) GetEvents(ctx context.Context, request api.GetEventsRequestObj
 
 func (s *Service) PostEvents(ctx context.Context, request api.PostEventsRequestObject) (api.PostEventsResponseObject, error) {
 
-	event, err := models.FromApiPostEvent(request.Body)
+	event, err := model.FromApiPostEvent(request.Body)
 	if err != nil {
-		if err == models.ErrInvalidMissingField {
+		if err == model.ErrInvalidMissingField {
 			return api.PostEvents400Response{}, nil
 		}
 		return nil, err
@@ -77,9 +77,9 @@ func (s *Service) GetEventsEventId(ctx context.Context, request api.GetEventsEve
 }
 
 func (s *Service) PutEventsEventId(ctx context.Context, request api.PutEventsEventIdRequestObject) (api.PutEventsEventIdResponseObject, error) {
-	event, err := models.FromApiPutEvent(request.Body)
+	event, err := model.FromApiPutEvent(request.Body)
 	if err != nil {
-		if err == models.ErrInvalidMissingField {
+		if err == model.ErrInvalidMissingField {
 			return api.PutEventsEventId400Response{}, nil
 		}
 		return nil, err
