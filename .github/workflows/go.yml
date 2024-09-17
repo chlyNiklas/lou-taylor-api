@@ -19,7 +19,7 @@ jobs:
     - name: "Install webp"
       run: |
         sudo apt-get update
-        sudo apt-get install libwebp
+        sudo apt-get install libwebp-dev
 
     - name: Set up Go
       uses: actions/setup-go@v4
