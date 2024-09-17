@@ -86,22 +86,25 @@ type PostEventsJSONBody struct {
 	Place string `json:"place"`
 
 	// Time The date and time when the event will occur
-	Time *time.Time `json:"time,omitempty"`
+	Time time.Time `json:"time"`
 
 	// Title The title of the lunch event
 	Title string `json:"title"`
 }
 
-// PutEventsEventIdMultipartBody defines parameters for PutEventsEventId.
-type PutEventsEventIdMultipartBody struct {
+// PutEventsEventIdJSONBody defines parameters for PutEventsEventId.
+type PutEventsEventIdJSONBody struct {
 	// Description Additional details about the lunch event
 	Description *string `json:"description,omitempty"`
 
-	// Image An optional image file for the event
-	Image *openapi_types.File `json:"image,omitempty"`
+	// Image Link to the image
+	Image *string `json:"image,omitempty"`
 
 	// Place The location where the lunch will take place
 	Place string `json:"place"`
+
+	// Time The date and time when the event will occur
+	Time time.Time `json:"time"`
 
 	// Title The title of the lunch event
 	Title string `json:"title"`
@@ -119,8 +122,8 @@ type PostAuthLoginJSONRequestBody = Login
 // PostEventsJSONRequestBody defines body for PostEvents for application/json ContentType.
 type PostEventsJSONRequestBody PostEventsJSONBody
 
-// PutEventsEventIdMultipartRequestBody defines body for PutEventsEventId for multipart/form-data ContentType.
-type PutEventsEventIdMultipartRequestBody PutEventsEventIdMultipartBody
+// PutEventsEventIdJSONRequestBody defines body for PutEventsEventId for application/json ContentType.
+type PutEventsEventIdJSONRequestBody PutEventsEventIdJSONBody
 
 // PostImagesMultipartRequestBody defines body for PostImages for multipart/form-data ContentType.
 type PostImagesMultipartRequestBody PostImagesMultipartBody
@@ -641,7 +644,7 @@ func (response GetEventsEventId404Response) VisitGetEventsEventIdResponse(w http
 
 type PutEventsEventIdRequestObject struct {
 	EventId openapi_types.UUID `json:"eventId"`
-	Body    *multipart.Reader
+	Body    *PutEventsEventIdJSONRequestBody
 }
 
 type PutEventsEventIdResponseObject interface {
@@ -974,12 +977,12 @@ func (sh *strictHandler) PutEventsEventId(w http.ResponseWriter, r *http.Request
 
 	request.EventId = eventId
 
-	if reader, err := r.MultipartReader(); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
+	var body PutEventsEventIdJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
-	} else {
-		request.Body = reader
 	}
+	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.PutEventsEventId(ctx, request.(PutEventsEventIdRequestObject))
@@ -1087,36 +1090,35 @@ func (sh *strictHandler) GetImagesImageName(w http.ResponseWriter, r *http.Reque
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
-	"qrhXbTdV257ifqfn1uv/BwAA//8n96+JKh4AAA==",
+	"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",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

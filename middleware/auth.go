@@ -49,7 +49,7 @@ func (m *Middleware) Authentication(next http.Handler) http.Handler {
 		case "POST":
 			operation = path.Post
 		case "DELETE":
-			operation = path.Post
+			operation = path.Delete
 		case "PATCH":
 			operation = path.Patch
 		}

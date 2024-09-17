@@ -71,6 +71,7 @@ paths:
               required:
                 - title
                 - place
+                - time
               properties:
                 title:
                   type: string
@@ -145,29 +146,36 @@ paths:
       requestBody:
         required: true
         content:
-          multipart/form-data:
+          application/json:
             schema:
               type: object
               required:
                 - title
                 - place
+                - time
               properties:
                 title:
                   type: string
                   description: The title of the lunch event
-                  example: 'Updated Lunch Title'
+                  example: 'Team Building Lunch'
                 description:
                   type: string
                   description: Additional details about the lunch event
-                  example: 'Updated event details.'
+                  example: 'A fun lunch event for team bonding and socializing.'
                 place:
                   type: string
                   description: The location where the lunch will take place
-                  example: 'New Cafe Location'
+                  example: 'Rooftop Cafe'
+                time:
+                  type: string
+                  format: date-time
+                  description: The date and time when the event will occur
+                  example: '2023-09-01T12:30:00Zt'
                 image:
                   type: string
-                  format: binary
-                  description: An optional image file for the event
+                  description: Link to the image
+                  example: 'exaple.com/image.webp'
+
       security:
         - bearerAuth: ["admin"]
       responses:

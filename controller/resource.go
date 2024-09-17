@@ -6,15 +6,19 @@ import (
 
 	"github.com/chlyNiklas/lou-taylor-api/config"
 	"github.com/chlyNiklas/lou-taylor-api/models"
+	"github.com/google/uuid"
 )
-
-// compiletime check for impl StrictServerInterface
 
 type DataBase interface {
 	GetAllEvents() ([]*models.Event, error)
 	GetAllFutureEvents() ([]*models.Event, error)
 	GetAllPastEvents() ([]*models.Event, error)
+	GetEventById(id uuid.UUID) (*models.Event, error)
+	DeleteEventById(id uuid.UUID) error
+	WriteEvent(event *models.Event) error
+	SaveEvent(event *models.Event) error
 }
+
 type ImageStore interface {
 	Read(filename string) (file *os.File, size int64, err error)
 	Delete(filename string) error
