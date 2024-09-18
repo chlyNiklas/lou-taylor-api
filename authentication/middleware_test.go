@@ -135,7 +135,7 @@ func TestAuthentication_SecuredNoAbilities(t *testing.T) {
 		}
 
 	})
-	testForAllMethods(t, "with token on notexisting path -> OK", func(t *testing.T, method string) {
+	testForAllMethods(t, "with token on unspecified path -> Not Found", func(t *testing.T, method string) {
 
 		req, _ := http.NewRequest(method, "/wrong-path", nil)
 		rr := httptest.NewRecorder()
@@ -146,6 +146,27 @@ func TestAuthentication_SecuredNoAbilities(t *testing.T) {
 
 		// run
 		m := New(cfg, spec)
+		htt := m.Authentication(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNotFound) }))
+		htt.ServeHTTP(rr, req)
+
+		expected := "404 Not Found"
+		if rr.Result().Status != expected {
+			t.Errorf("Expected %s got: %s", expected, rr.Result().Status)
+		}
+
+	})
+	testForAllMethods(t, "unspecified method -> Not Found", func(t *testing.T, method string) {
+
+		s := specWithSecurityForPath("/path", nil)
+		req, _ := http.NewRequest(method, "/path", nil)
+		rr := httptest.NewRecorder()
+
+		token, _ := createJWT("admin", []string{}, cfg.JWTSecret, time.Hour)
+
+		setToken(req, token)
+
+		// run
+		m := New(cfg, s)
 		htt := m.Authentication(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNotFound) }))
 		htt.ServeHTTP(rr, req)
 

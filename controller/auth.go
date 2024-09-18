@@ -18,7 +18,7 @@ func (s *Service) PostAuthLogin(ctx context.Context, request api.PostAuthLoginRe
 
 	token, err := s.auth.Login(user)
 
-	if err == authentication.ErrMissingFields {
+	if err == authentication.ErrInvalidCredentials {
 		return api.PostAuthLogin401Response{}, nil
 	}
 

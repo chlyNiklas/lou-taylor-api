@@ -12,9 +12,9 @@ import (
 var errInvalidJWT = errors.New("invalid JWT")
 var errExpiredJWT = errors.New("expired JWT")
 
-func createJWT(username string, abilities []string, secret []byte, vialid time.Duration) (token string, err error) {
+func createJWT(name string, abilities []string, secret []byte, vialid time.Duration) (token string, err error) {
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"name":            username,
+		"name":            name,
 		"abilities":       abilities,
 		"expiration_date": time.Now().Add(vialid).Unix(),
 	}).SignedString(secret)
