@@ -9,9 +9,9 @@ import (
 
 // Config holds all config values
 type Config struct {
-	Admin       *model.User
-	JWTSecret   []byte
-	ValidPeriod time.Duration
+	Admin       *model.User   `toml:"admin" comment:"Credentials of admin user"`
+	JWTSecret   string        `toml:"secret" comment:"secret to sign JWT with"`
+	ValidPeriod time.Duration `toml:"valid_period" comment:"timeperiod the token is valid in nanoseconds"`
 }
 
 // Service provides all authentication methods & middlewares

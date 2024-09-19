@@ -9,8 +9,8 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-var cfg = &Config{
-	JWTSecret:   []byte("secret"),
+var mwtCfg = &Config{
+	JWTSecret:   "secret",
 	ValidPeriod: time.Hour,
 }
 
@@ -104,7 +104,7 @@ func TestAuthentication_SecuredNoAbilities(t *testing.T) {
 		req, _ := http.NewRequest(method, "/health-check", nil)
 		rr := httptest.NewRecorder()
 
-		m := New(cfg, spec)
+		m := New(mwtCfg, spec)
 
 		htt := m.Authentication(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { return }))
 
@@ -121,12 +121,12 @@ func TestAuthentication_SecuredNoAbilities(t *testing.T) {
 		req, _ := http.NewRequest(method, "/health-check", nil)
 		rr := httptest.NewRecorder()
 
-		token, _ := createJWT("admin", []string{}, cfg.JWTSecret, time.Hour)
+		token, _ := createJWT("admin", []string{}, mwtCfg.JWTSecret, time.Hour)
 
 		setToken(req, token)
 
 		// run
-		m := New(cfg, spec)
+		m := New(mwtCfg, spec)
 		htt := m.Authentication(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }))
 		htt.ServeHTTP(rr, req)
 
@@ -140,12 +140,12 @@ func TestAuthentication_SecuredNoAbilities(t *testing.T) {
 		req, _ := http.NewRequest(method, "/wrong-path", nil)
 		rr := httptest.NewRecorder()
 
-		token, _ := createJWT("admin", []string{}, cfg.JWTSecret, time.Hour)
+		token, _ := createJWT("admin", []string{}, mwtCfg.JWTSecret, time.Hour)
 
 		setToken(req, token)
 
 		// run
-		m := New(cfg, spec)
+		m := New(mwtCfg, spec)
 		htt := m.Authentication(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNotFound) }))
 		htt.ServeHTTP(rr, req)
 
@@ -161,12 +161,12 @@ func TestAuthentication_SecuredNoAbilities(t *testing.T) {
 		req, _ := http.NewRequest(method, "/path", nil)
 		rr := httptest.NewRecorder()
 
-		token, _ := createJWT("admin", []string{}, cfg.JWTSecret, time.Hour)
+		token, _ := createJWT("admin", []string{}, mwtCfg.JWTSecret, time.Hour)
 
 		setToken(req, token)
 
 		// run
-		m := New(cfg, s)
+		m := New(mwtCfg, s)
 		htt := m.Authentication(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusNotFound) }))
 		htt.ServeHTTP(rr, req)
 

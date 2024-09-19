@@ -2,9 +2,9 @@
 package image_service
 
 type Config struct {
-	Quality  float32 // Quality defines the quality of the stored webp Values from 1-100
-	MaxWith  int     // MaxWith defines the maximum with an image gets stored with
-	SavePath string  // SavePath specifies the directory where the image will be saved.
+	Quality  float32 `toml:"quality" comment:" Quality defines the quality of the stored webp Values from 1-100"`
+	MaxWith  int     `toml:"width" comment:"defines the maximum with an image gets stored with"`
+	SavePath string  `toml:"save_path" comment:"specifies the directory where the image will be saved"`
 }
 
 // Manager saves images, and returns them

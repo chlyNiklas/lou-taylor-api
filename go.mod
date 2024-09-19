@@ -10,6 +10,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/kolesa-team/go-webp v1.0.4
 	github.com/oapi-codegen/runtime v1.1.1
+	github.com/pelletier/go-toml/v2 v2.2.3
 	golang.org/x/image v0.20.0
 	gorm.io/driver/postgres v1.5.9
 	gorm.io/gorm v1.25.12

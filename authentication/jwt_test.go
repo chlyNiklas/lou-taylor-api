@@ -9,7 +9,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func validateAndExpectError(t *testing.T, expected error, token string, secret []byte) {
+func validateAndExpectError(t *testing.T, expected error, token string, secret string) {
 	_, _, err := validateJWT(token, secret)
 
 	if !errors.Is(err, expected) {
@@ -19,7 +19,7 @@ func validateAndExpectError(t *testing.T, expected error, token string, secret [
 
 func TestJWT(t *testing.T) {
 
-	secret := []byte("my secret")
+	secret := "my secret"
 	user := "häns"
 
 	t.Run("matches fields", func(t *testing.T) {
@@ -63,7 +63,7 @@ func TestJWT(t *testing.T) {
 	})
 
 	t.Run("wrongly signed", func(t *testing.T) {
-		token, err := createJWT("name", []string{}, []byte("wrong secret"), time.Hour)
+		token, err := createJWT("name", []string{}, "wrong secret", time.Hour)
 		if err != nil {
 			t.Errorf("Expected err == nil but got: %v", err)
 		}
