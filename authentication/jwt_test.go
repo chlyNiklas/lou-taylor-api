@@ -79,7 +79,7 @@ func TestJWT(t *testing.T) {
 		token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"abilities":       []string{},
 			"expiration_date": time.Now().Add(time.Hour).Unix(),
-		}).SignedString(secret)
+		}).SignedString([]byte(secret))
 
 		if err != nil {
 			t.Errorf("Expected err == nil but got: %v", err)
@@ -91,7 +91,7 @@ func TestJWT(t *testing.T) {
 		token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"name":            "hans",
 			"expiration_date": time.Now().Add(time.Hour).Unix(),
-		}).SignedString(secret)
+		}).SignedString([]byte(secret))
 
 		if err != nil {
 			t.Errorf("Expected err == nil but got: %v", err)
@@ -104,7 +104,7 @@ func TestJWT(t *testing.T) {
 		token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"name":      "hans",
 			"abilities": []string{},
-		}).SignedString(secret)
+		}).SignedString([]byte(secret))
 
 		if err != nil {
 			t.Errorf("Expected err == nil but got: %v", err)
@@ -114,7 +114,7 @@ func TestJWT(t *testing.T) {
 
 	})
 	t.Run("no cliams", func(t *testing.T) {
-		token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, nil).SignedString(secret)
+		token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, nil).SignedString([]byte(secret))
 
 		if err != nil {
 			t.Errorf("Expected err == nil but got: %v", err)
