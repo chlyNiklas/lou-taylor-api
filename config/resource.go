@@ -1,10 +1,7 @@
 package config
 
 import (
-	"os"
 	"time"
-
-	"github.com/pelletier/go-toml/v2"
 
 	"github.com/chlyNiklas/lou-taylor-api/authentication"
 	"github.com/chlyNiklas/lou-taylor-api/database"
@@ -14,6 +11,7 @@ import (
 
 // Config holds all configuration values
 type Config struct {
+	ConfigPath     string                 `toml:"-"`
 	Database       *database.Config       `toml:"database" comment:"PostgreSQL connection"`
 	Authentication *authentication.Config `toml:"security"`
 	Images         *image_service.Config  `toml:"images" comment:"image endpoint"`
@@ -23,7 +21,7 @@ type Config struct {
 // Default returns a pointer to a default configuration
 func Default() *Config {
 	return &Config{
-
+		ConfigPath: "./config.toml",
 		Database: &database.Config{
 			Host:     "localhost",
 			User:     "username",
@@ -42,27 +40,8 @@ func Default() *Config {
 				Password: "password",
 			},
 			JWTSecret:   "my secret",
-			ValidPeriod: time.Nanosecond,
+			ValidPeriod: time.Hour * 24,
 		},
 		BaseUrl: "localhost:8080",
 	}
-}
-
-func (c *Config) ReadFile(name string) error {
-	file, err := os.Open(name)
-	if err != nil {
-		return err
-	}
-
-	err = toml.NewDecoder(file).Decode(c)
-
-	return err
-}
-
-func (c *Config) TOML() string {
-	b, err := toml.Marshal(c)
-	if err != nil {
-		panic(err)
-	}
-	return string(b)
 }

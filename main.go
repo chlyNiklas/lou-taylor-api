@@ -21,7 +21,8 @@ const configFile = "./config.toml"
 func main() {
 
 	cfg := config.Default()
-	if err := cfg.ReadFile(configFile); err != nil {
+	cfg.ReadFlags()
+	if err := cfg.ReadFile(cfg.ConfigPath); err != nil {
 		log.Println(err)
 	}
 
