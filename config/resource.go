@@ -4,31 +4,25 @@ import (
 	"time"
 
 	"github.com/chlyNiklas/lou-taylor-api/authentication"
+	"github.com/chlyNiklas/lou-taylor-api/database"
 	"github.com/chlyNiklas/lou-taylor-api/image_service"
 	"github.com/chlyNiklas/lou-taylor-api/model"
 )
 
-type Database struct {
-	Host     string
-	User     string
-	Password string
-	Name     string
-	Port     int
-}
-
 // Config holds all configuration values
 type Config struct {
-	Database *Database
-	Security *authentication.Config
-	Images   *image_service.Config
-	BaseUrl  string
-	SavePath string
+	ConfigPath     string                 `toml:"-"`
+	Database       *database.Config       `toml:"database" comment:"PostgreSQL connection"`
+	Authentication *authentication.Config `toml:"security"`
+	Images         *image_service.Config  `toml:"images" comment:"image endpoint"`
+	BaseUrl        string                 `toml:"base_url"`
 }
 
-func New() *Config {
+// Default returns a pointer to a default configuration
+func Default() *Config {
 	return &Config{
-
-		Database: &Database{
+		ConfigPath: "./config.toml",
+		Database: &database.Config{
 			Host:     "localhost",
 			User:     "username",
 			Password: "password",
@@ -40,13 +34,13 @@ func New() *Config {
 			MaxWith:  2096,
 			SavePath: ".tmp/",
 		},
-		Security: &authentication.Config{
+		Authentication: &authentication.Config{
 			Admin: &model.User{
 				Name:     "admin",
 				Password: "password",
 			},
-			JWTSecret:   []byte("my secret"),
-			ValidPeriod: time.Hour * 3,
+			JWTSecret:   "my secret",
+			ValidPeriod: time.Hour * 24,
 		},
 		BaseUrl: "localhost:8080",
 	}

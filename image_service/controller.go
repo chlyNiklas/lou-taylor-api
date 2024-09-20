@@ -47,7 +47,7 @@ func (m *Manager) SaveImage(img image.Image) (filename string, err error) {
 		return
 	}
 
-	o, err := encoder.NewLossyEncoderOptions(encoder.PresetDefault, m.cfg.Quality)
+	o, err := encoder.NewLossyEncoderOptions(encoder.PresetDefault, float32(m.cfg.Quality))
 	if err != nil {
 		return
 	}

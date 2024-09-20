@@ -12,15 +12,15 @@ import (
 var errInvalidJWT = errors.New("invalid JWT")
 var errExpiredJWT = errors.New("expired JWT")
 
-func createJWT(name string, abilities []string, secret []byte, vialid time.Duration) (token string, err error) {
+func createJWT(name string, abilities []string, secret string, vialid time.Duration) (token string, err error) {
 	return jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"name":            name,
 		"abilities":       abilities,
 		"expiration_date": time.Now().Add(vialid).Unix(),
-	}).SignedString(secret)
+	}).SignedString([]byte(secret))
 }
 
-func validateJWT(tokenString string, secret []byte) (user string, abilities []string, err error) {
+func validateJWT(tokenString string, secret string) (user string, abilities []string, err error) {
 	// Parse takes the token string and a function for looking up the key. The latter is especially
 	// useful if you use multiple keys for your application.  The standard is to use 'kid' in the
 	// head of the token to identify which key to use, but the parsed token (head and claims) is provided
@@ -31,7 +31,7 @@ func validateJWT(tokenString string, secret []byte) (user string, abilities []st
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return secret, nil
+		return []byte(secret), nil
 	})
 	if err != nil {
 		return

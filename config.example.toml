@@ -1,0 +1,29 @@
+base_url = 'localhost:8080'
+
+# PostgreSQL connection
+[database]
+host = 'localhost'
+user = 'username'
+password = 'password'
+db_name = 'event_db'
+port = 5432
+
+[security]
+# secret to sign JWT with
+secret = 'my secret'
+# timeperiod the token is valid in nanoseconds (3600000000000 = 1h)
+valid_period = 86400000000000
+
+# Credentials of admin user
+[security.admin]
+Name = 'admin'
+Password = 'password'
+
+# image endpoint
+[images]
+#  Quality defines the quality of the stored webp Values from 1-100
+quality = 80.0
+# defines the maximum with an image gets stored with
+width = 2096
+# specifies the directory where the image will be saved
+save_path = '.tmp/'

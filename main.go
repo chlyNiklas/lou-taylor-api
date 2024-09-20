@@ -1,11 +1,14 @@
 package main
 
 import (
-	"log"
 	"net/http"
+
+	"fmt"
+	"log"
 
 	"github.com/chlyNiklas/lou-taylor-api/api"
 	"github.com/chlyNiklas/lou-taylor-api/authentication"
+
 	"github.com/chlyNiklas/lou-taylor-api/config"
 	"github.com/chlyNiklas/lou-taylor-api/controller"
 	"github.com/chlyNiklas/lou-taylor-api/database"
@@ -13,10 +16,18 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const configFile = "./config.toml"
+
 func main() {
 
-	cfg := config.New()
-	db, err := database.New(cfg)
+	cfg := config.Default()
+	cfg.ReadFlags()
+	if err := cfg.ReadFile(cfg.ConfigPath); err != nil {
+		log.Println(err)
+	}
+
+	fmt.Println(cfg.TOML())
+	db, err := database.New(cfg.Database)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -27,7 +38,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	auth := authentication.New(cfg.Security, spec)
+	auth := authentication.New(cfg.Authentication, spec)
 
 	controller := controller.New(cfg, db, img, auth)
 
