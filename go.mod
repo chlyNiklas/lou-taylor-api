@@ -4,7 +4,7 @@ go 1.22.5
 
 require (
 	github.com/devedge/imagehash v0.0.0-20180324030135-7061aa3b4066
-	github.com/getkin/kin-openapi v0.127.0
+	github.com/getkin/kin-openapi v0.128.0
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
