@@ -10,7 +10,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/kolesa-team/go-webp v1.0.4
 	github.com/oapi-codegen/runtime v1.1.1
-	golang.org/x/image v0.20.0
+	golang.org/x/image v0.21.0
 	gorm.io/driver/postgres v1.5.9
 	gorm.io/gorm v1.25.12
 )
@@ -33,6 +33,6 @@ require (
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
 	golang.org/x/crypto v0.27.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
-	golang.org/x/text v0.18.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
