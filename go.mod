@@ -11,7 +11,7 @@ require (
 	github.com/kolesa-team/go-webp v1.0.4
 	github.com/oapi-codegen/runtime v1.1.1
 	golang.org/x/image v0.20.0
-	gorm.io/driver/postgres v1.5.9
+	gorm.io/driver/postgres v1.5.10
 	gorm.io/gorm v1.25.12
 )
 
